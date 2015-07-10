@@ -32,7 +32,7 @@ user.
 
 You need to be able to load in movie and rating data. Using the `csv` module,
 write a module that will load in the movie data from `u.item` and the rating
-data from `u.info`. You can choose how you will store movies and ratings, but
+data from `u.data`. You can choose how you will store movies and ratings, but
 you will need to be able to associate them later.
 
 Specifically, you will need to be able to:
