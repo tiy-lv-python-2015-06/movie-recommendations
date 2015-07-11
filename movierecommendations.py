@@ -15,10 +15,11 @@ def load_movie_details():
 
 def load_movie_user_cross_reference():
     """LIST of lists of:  user_id | item_id | rating | timestamp"""
+    # this HAS to be a list because there is no unique identifier!
     with open("u.data") as file:
-        reader = csv.DictReader(file, delimiter="\t")
-        movie_user_ratings_dict = {row["user_id"]: row for row in reader}
-        return movie_user_ratings_dict
+        reader = csv.reader(file, delimiter="\t")
+        movie_user_ratings_list = [row for row in reader]
+    return movie_user_ratings_list
 
 
 def load_rating_data():
@@ -39,22 +40,31 @@ def find_movie_titles_given_list(list):
 
 # key is user value is a list of movies that they've rated
 
+# def find_all_ratings_for_movie(movie_id):
+#     # user_id | item_id | rating | timestamp
+#     # Find all ratings for a movie by id
+#     # Args: movie_id (String)   Return: ratings_list (List of Ints) => [3,5,2,1,2,3,4,5]
+#     #DONT PRINT this result it'll end in tears
+#     # movie_user_ratings_dict = {'1010': {'timestamp': '875072956', 'rating': '2', 'user_id': '1', 'movie_id': '94'}}
+#     its_ratings_list = []
+#     for item_dict, value in movie_user_ratings_dict:
+#         # if the key named 'movie_id' exists in that item row of movie_user_ratings_dict, append its value to its_ratings_list
+#         if movie_id in item_dict:
+#             print(item_dict[movie_id]['movie_id'])
+#         #
+#         # if int(item[1]) == int(movie_id):
+#         #     its_ratings_list.append(int(item[2]))
+#     return its_ratings_list
+
 def find_all_ratings_for_movie(movie_id):
     # user_id | item_id | rating | timestamp
     # Find all ratings for a movie by id
     # Args: movie_id (String)   Return: ratings_list (List of Ints) => [3,5,2,1,2,3,4,5]
-    #DONT PRINT this result it'll end in tears
-    # movie_user_ratings_dict = {'1010': {'timestamp': '875072956', 'rating': '2', 'user_id': '1', 'movie_id': '94'}}
     its_ratings_list = []
-    for item_dict in movie_user_ratings_dict:
-        # if the key named 'movie_id' exists in that item row of movie_user_ratings_dict, append its value to its_ratings_list
-        if movie_id in item_dict:
-            print(item_dict[movie_id]['movie_id'])
-        #
-        # if int(item[1]) == int(movie_id):
-        #     its_ratings_list.append(int(item[2]))
+    for rating_item in movie_user_ratings_list:
+        if rating_item[1] == movie_id:
+            its_ratings_list.append(int(rating_item[2]))
     return its_ratings_list
-
 
 def find_average_rating_for_movie(movie_id):
     #SUCCESS
@@ -66,20 +76,15 @@ def find_average_rating_for_movie(movie_id):
 
 def find_all_ratings_for_user(user_id):
     #Find all ratings and movies a user has rated
-    #Args: user_id (String)  Return: (movie_id, rating) List of String Tuples => [(908,3),(777,5),(213,44)]
+    #Args: user_id (String)  Return: {user_id: {{movie_id: rating}} Dict of dicts => {'203':{'333':4},{'888':2}}
     # user_id | item_id | rating | timestamp
     # d = {key: value for (key, value) in iterable}
-    user_ratings_dict = {
-
-    }
-
-    user_ratings_list = []
+    user_ratings_dict = {}
+    user_ratings_dict[user_id] = {}
     for item in movie_user_ratings_list:
-        if int(item[0]) == int(user_id):
-            # (movie_id, rating)
-            #user_ratings_list.append((int(item[1]),int(item[2])))
-            user_ratings_list.append((item[1],int(item[2])))
-    return user_ratings_list
+        if item[0] == user_id:
+            user_ratings_dict[user_id][item[1]] = item[2]
+    return user_ratings_dict
 
     #Recommend the most popular movies.
     #Show the top X (40) movies by average rating with their rating
@@ -147,9 +152,9 @@ if __name__ == '__main__':
 
     print(load_rating_data())
 
-    movie_user_ratings_dict = load_movie_user_cross_reference()
-    print("this is movie_user_ratings_dict['1']   :")
-    print(movie_user_ratings_dict['1'])
+    movie_user_ratings_list = load_movie_user_cross_reference()
+    print("this is movie_user_ratings_dict[0]   :")
+    print(movie_user_ratings_list[0])
     print("-------------------")
 
     movie_details_dict = load_movie_details()
@@ -163,20 +168,24 @@ if __name__ == '__main__':
     print('---------------------')
 
     print("find_all_ratings_for_movie('333')")
-    print(find_all_ratings_for_movie('333'))
-    #
-    # print("find_average_rating_for_movie('1080)")
-    # print(find_average_rating_for_movie('1080'))
-    #
-    # print("the following is movie_user_ratings_list[0]")
-    # print(movie_user_ratings_list[0])
-    #
-    # print("user_ratings_list is:")
-    # print("find_all_ratings_for_user(user_id)")
-    # print(find_all_ratings_for_user('33'))
-    #
-    # #print(type(movie_details_dict))
-    # #print(movie_ratings_frequency()['1080'])
+    all_ratings_for_three_three_three = (find_all_ratings_for_movie('333'))
+    print("there are {} ratings for this movie".format(len(all_ratings_for_three_three_three)))
+    print(all_ratings_for_three_three_three)
+
+    print("find_all_ratings_for_movie('111')")
+    all_ratings_for = (find_all_ratings_for_movie('111'))
+    print("there are {} ratings for this movie".format(len(all_ratings_for)))
+    print(all_ratings_for)
+
+    print("find_average_rating_for_movie('1080')")
+    print(find_average_rating_for_movie('1080'))
+
+    print("user_ratings_list is:")
+    print("find_all_ratings_for_user('33')")
+    print(find_all_ratings_for_user('33'))
+
+    print(type(movie_details_dict))
+    print(movie_ratings_frequency()['1080'])
     # movie_ratings_frequency_list = movie_ratings_frequency()
     # len(movie_ratings_frequency_list)
     # print(movie_ratings_frequency_list[0:10])
