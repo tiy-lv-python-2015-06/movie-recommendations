@@ -31,7 +31,7 @@ def load_rating_data():
 def find_movie_title(movie_id):
     # Find the name of a movie by id
     # Args: movie_id (String)    Return: movie_title (String)   => Celestial Clockwork (1994)
-    return movie_details_dict[movie_id]['movie_title']
+    return load_movie_details()[movie_id]['movie_title']
 
 def find_movie_titles_given_list(list):
     """Given ('121', 4) list, Returns list, replacing movie titles where there were movie_ids"""
@@ -44,14 +44,14 @@ def find_all_ratings_for_movie(movie_id):
     # Find all ratings for a movie by id
     # Args: movie_id (String)   Return: ratings_list (List of Ints) => [3,5,2,1,2,3,4,5]
     movie_user_ratings_list = load_movie_user_cross_reference()
-    its_ratings_list = []
-    for rating_item in movie_user_ratings_list:
-        if rating_item[1] == movie_id:
-            its_ratings_list.append(int(rating_item[2]))
+    its_ratings_list = [
+        int(rating_item[2])
+        for rating_item in movie_user_ratings_list
+        if rating_item[1] == movie_id
+    ]
     return its_ratings_list
 
 def find_average_rating_for_movie(movie_id):
-    #SUCCESS
     # Find the average rating for a movie by id
     its_ratings_list = find_all_ratings_for_movie(movie_id)
     raw_average = sum(its_ratings_list)/len(its_ratings_list)
@@ -71,16 +71,11 @@ def find_all_ratings_for_user(user_id):
             user_ratings_dict[user_id][item[1]] = item[2]
     return user_ratings_dict
 
-    #Recommend the most popular movies.
-    #Show the top X (40) movies by average rating with their rating
-    #Movie must have been rated at least X (10) times
-
-    #a function makes a dictionary of all movies key:value movie_id:frequency_of_ratings
 
 def movie_ratings_frequency():
-    """Returns LIST of TUPLES of ALL movies (movie_id, frequency_of_ratings)
+    """Returns dict of ALL movies (movie_id, frequency_of_ratings)
     #   make dictionary of all 1682 load_movie_details()/movie_details_dict for X(1682 movies)times.
-    # user_id | item_id | rating | timestamp"""
+    # cross reference list = user_id | item_id | rating | timestamp"""
     movie_user_ratings_list = load_movie_user_cross_reference()
     all_movies_ratings_frequency = {}
     for movie in movie_user_ratings_list:
@@ -91,8 +86,6 @@ def movie_ratings_frequency():
     return all_movies_ratings_frequency
 
 def filter_for_minimum_number_of_ratings(min_number_of_ratings):
-    # SUCCESS
-    # for movie in dict
     simple_dict = {"a":{"foo":"bar"}, "b":{"bar":"foo"}}
     movie_ratings_dict = movie_ratings_frequency()
     filtered_dict = {}
@@ -125,6 +118,54 @@ def find_top_unviewed_movies(user_id):
         sorted_movie_dict[movie_id] = find_average_rating_for_movie(movie_id)
     return sorted_movie_dict
 
+def sort_two_user_lists(first_user, second_user):
+    """Given 2 user_id's, find common movies, return a dictionary of two lists with those movies and ratings
+     Return: { user_id1:[('88',2) ('143',3), ('200',1)], user_id2:[('88',1), ('143',2), ('200',5)]
+    """
+    first_user_dict = find_all_ratings_for_user(first_user)
+    # common_dict = first_user_dict
+    second_user_dict = find_all_ratings_for_user(second_user)
+    first_user_list = first_user_dict[first_user]
+    second_user_list = second_user_dict[second_user]
+    #return first_user_dict
+    first_user_set = set(first_user_list)
+    second_user_set = set(second_user_list)
+    common_list = []
+    for key in first_user_set.intersection(second_user_set):
+        movie_rating_pair = (key, second_user_list[key])
+        common_list.append(movie_rating_pair)
+    print("user list 1{}".format(first_user_list))
+    print("user list 1{} length".format(len(first_user_list)))
+    print("user list 2{}".format(second_user_list))
+    print("user list 2{} length".format(len(second_user_list)))
+    print("common_list length is {} ".format(len(common_list)))
+    
+    return common_list
+    # two_user_dict = { first_user:first_user_common_list, second_user:second_user_common_list}
+    # return two_user_dict
+
+    #turn user dicts into lists
+
+    #take common movies to create a list starting with smallest int(movie_id) to biggest
+
+# to take two users and find their similarity.
+# If you have a list of movie ratings for user 1 (v) and a list for user 2 (w),
+# where each list is made up of ratings for movies they've both seen in the same order,
+# then you can use this formula:
+
+def euclidean_distance(v, w):
+    """Given two lists, give the Euclidean distance between them on a scale
+    of 0 to 1. 1 means the two lists are identical.
+    """
+    # Guard against empty lists.
+    if len(v) is 0:
+        return 0
+    # Note that this is the same as vector subtraction.
+    differences = [v[idx] - w[idx] for idx in range(len(v))]
+    squares = [diff ** 2 for diff in differences]
+    sum_of_squares = sum(squares)
+    return 1 / (1 + math.sqrt(sum_of_squares))
+
 if __name__ == '__main__':
 
    # print(averages_of_all_movies())
@@ -138,6 +179,11 @@ if __name__ == '__main__':
     print("this is  find_movie_title('100')")
     print(find_movie_title('100'))
     print('---------------------')
+
+    print("sorting user lists")
+    print(sort_two_user_lists('11', '33'))
+    print(sort_two_user_lists('11','12'))
+    print(sort_two_user_lists('100','150'))
 
 
     print("find_average_rating_for_movie('1080')")
