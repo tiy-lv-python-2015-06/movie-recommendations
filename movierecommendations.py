@@ -38,28 +38,12 @@ def find_movie_titles_given_list(list):
     # [('688', 1.84), ('368', 1.9), ('890', 1.95), ('743', 1.95)]
     pass
 
-# key is user value is a list of movies that they've rated
-
-# def find_all_ratings_for_movie(movie_id):
-#     # user_id | item_id | rating | timestamp
-#     # Find all ratings for a movie by id
-#     # Args: movie_id (String)   Return: ratings_list (List of Ints) => [3,5,2,1,2,3,4,5]
-#     #DONT PRINT this result it'll end in tears
-#     # movie_user_ratings_dict = {'1010': {'timestamp': '875072956', 'rating': '2', 'user_id': '1', 'movie_id': '94'}}
-#     its_ratings_list = []
-#     for item_dict, value in movie_user_ratings_dict:
-#         # if the key named 'movie_id' exists in that item row of movie_user_ratings_dict, append its value to its_ratings_list
-#         if movie_id in item_dict:
-#             print(item_dict[movie_id]['movie_id'])
-#         #
-#         # if int(item[1]) == int(movie_id):
-#         #     its_ratings_list.append(int(item[2]))
-#     return its_ratings_list
 
 def find_all_ratings_for_movie(movie_id):
     # user_id | item_id | rating | timestamp
     # Find all ratings for a movie by id
     # Args: movie_id (String)   Return: ratings_list (List of Ints) => [3,5,2,1,2,3,4,5]
+    movie_user_ratings_list = load_movie_user_cross_reference()
     its_ratings_list = []
     for rating_item in movie_user_ratings_list:
         if rating_item[1] == movie_id:
@@ -79,6 +63,7 @@ def find_all_ratings_for_user(user_id):
     #Args: user_id (String)  Return: {user_id: {{movie_id: rating}} Dict of dicts => {'203':{'333':4},{'888':2}}
     # user_id | item_id | rating | timestamp
     # d = {key: value for (key, value) in iterable}
+    movie_user_ratings_list = load_movie_user_cross_reference()
     user_ratings_dict = {}
     user_ratings_dict[user_id] = {}
     for item in movie_user_ratings_list:
@@ -96,86 +81,64 @@ def movie_ratings_frequency():
     """Returns LIST of TUPLES of ALL movies (movie_id, frequency_of_ratings)
     #   make dictionary of all 1682 load_movie_details()/movie_details_dict for X(1682 movies)times.
     # user_id | item_id | rating | timestamp"""
-
-    # d = {key: value for (key, value) in iterable}
+    movie_user_ratings_list = load_movie_user_cross_reference()
     all_movies_ratings_frequency = {}
-    print("AHHHHH")
-    print(movie_user_ratings_list[1])
     for movie in movie_user_ratings_list:
         if movie[1] not in all_movies_ratings_frequency:
             all_movies_ratings_frequency[(movie[1])] = 1
         else:
             all_movies_ratings_frequency[(movie[1])] += 1
-    return sorted(all_movies_ratings_frequency.items(), key=lambda x :x[1], reverse=True)
+    return all_movies_ratings_frequency
+
+def filter_for_minimum_number_of_ratings(min_number_of_ratings):
+    # SUCCESS
+    # for movie in dict
+    simple_dict = {"a":{"foo":"bar"}, "b":{"bar":"foo"}}
+    movie_ratings_dict = movie_ratings_frequency()
+    filtered_dict = {}
+    for key, value in movie_ratings_dict.items():
+        if int(value) >= min_number_of_ratings:
+            filtered_dict[key] = value
+    #print(filtered_dict)
+    return filtered_dict
 
 
-def filter_for_minimum_number_of_ratings(movie_ratings_list, min_number_of_ratings):
-    #SUCCESS
-    #for movie in list
-    return [movie for movie in movie_ratings_list if int(movie[1]) > min_number_of_ratings]
-    # filtered_list = []
-    # for idx, movie in enumerate(movie_ratings_list):
-    #     if int(movie[1]) > min_number_of_ratings:
-    #         filtered_list.append(movie)
-    # return filtered_list
+def averages_of_all_movies():
+    dict_of_movies_and_ratings = filter_for_minimum_number_of_ratings(200)
+    movie_averages_dict = {}
+    for key, value in dict_of_movies_and_ratings.items():
+        movie_averages_dict[key] = find_average_rating_for_movie(key)
+    return movie_averages_dict
 
 
-def averages_of_all_movies(list_of_movies_and_ratings):
-    unsorted_filtered_movie_averages = [
-        (movie[0], find_average_rating_for_movie(movie[0]))
-        for movie in list_of_movies_and_ratings
-     ]
-    return sorted(unsorted_filtered_movie_averages, key=lambda x: x[1])
+def find_top_unviewed_movies(user_id):
+    """Given dict of all movie averages, return sorted list of top movies user not seen, sorted by average first"""
+    movie_averages_dict = averages_of_all_movies()
+    viewed_movies_dict = find_all_ratings_for_user(user_id)
+    for key, value in viewed_movies_dict.items():
+        if key in viewed_movies_dict:
+            del movie_averages_dict[key]
+    sorted_movie_list = sorted(movie_averages_dict, key=movie_averages_dict.get, reverse=True)[:40]
+    sorted_movie_dict = {}
+    #get averages for all movies in that list
+    for movie_id in sorted_movie_list:
+        sorted_movie_dict[movie_id] = find_average_rating_for_movie(movie_id)
+    return sorted_movie_dict
 
-
-def find_top_unviewed_movies(list_of_movies_and_averages, user_id):
-    """Given list of (movie_id,avg rating), return sorted subset of that list user has not seen"""
-    #  Generate the list of movies user has rated, compare that against all movies and subtract movies viewed
-    viewed_list = find_all_ratings_for_user(user_id)
-    all_list = list_of_movies_and_averages
-    print("user_id {} has seen {} movies in the list of {} movies )".format(user_id, len(viewed_list), len(all_list)))
-    unviewed_list = all_list
-    for viewed_movie in viewed_list: # go through just the list of a user's rated movies
-        for total_movie in unviewed_list:
-            if viewed_movie[0] == total_movie[0]:
-                unviewed_list.remove(total_movie)
-    unviewed_list_sorted = sorted(unviewed_list, key=lambda x: x[1])
-    #return Top 40 Unviewed List Of Movies for that user!
-    return unviewed_list_sorted[0:41]
-
-
-# for each movie in your filtered_for_minimum_number_of_ratings() list
-#   find_average_rating_for_movie(movie_id)
-#   make that into a list of movie_id and average rating
-#   find the highest in that list
 if __name__ == '__main__':
 
-    print(load_rating_data())
+   # print(averages_of_all_movies())
 
-    movie_user_ratings_list = load_movie_user_cross_reference()
-    print("this is movie_user_ratings_dict[0]   :")
-    print(movie_user_ratings_list[0])
-    print("-------------------")
+ #   print(load_rating_data())
+    print(filter_for_minimum_number_of_ratings(400))
 
-    movie_details_dict = load_movie_details()
-    #clockwork = (movie_details_dict['1080']['movie_title'])
-    print("this is movie_details_dict['1080']  : ")
-    print(movie_details_dict['1080'])
-    print('--------------------')
+    print("find_top_unviewed_movies('28')")
+    print(find_top_unviewed_movies('28'))
 
-    print("this is  find_movie_title('333')")
-    print(find_movie_title('333'))
+    print("this is  find_movie_title('100')")
+    print(find_movie_title('100'))
     print('---------------------')
 
-    print("find_all_ratings_for_movie('333')")
-    all_ratings_for_three_three_three = (find_all_ratings_for_movie('333'))
-    print("there are {} ratings for this movie".format(len(all_ratings_for_three_three_three)))
-    print(all_ratings_for_three_three_three)
-
-    print("find_all_ratings_for_movie('111')")
-    all_ratings_for = (find_all_ratings_for_movie('111'))
-    print("there are {} ratings for this movie".format(len(all_ratings_for)))
-    print(all_ratings_for)
 
     print("find_average_rating_for_movie('1080')")
     print(find_average_rating_for_movie('1080'))
@@ -183,24 +146,28 @@ if __name__ == '__main__':
     print("user_ratings_list is:")
     print("find_all_ratings_for_user('33')")
     print(find_all_ratings_for_user('33'))
-
-    print(type(movie_details_dict))
-    print(movie_ratings_frequency()['1080'])
-    # movie_ratings_frequency_list = movie_ratings_frequency()
-    # len(movie_ratings_frequency_list)
-    # print(movie_ratings_frequency_list[0:10])
-    # print('foo')
-    # filtered_movie_ratings_frequency_list = filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 30)
-    # # print(len(filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 30)))
-    # print(filtered_movie_ratings_frequency_list)
-    # #print(top_rated_movies_list(filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 30))[0:10])
-    # # for all movies in the whole movie list:
-    # #     find_all_ratings_for_movie(movie_id)
     #
-    # all_movie_averages = (averages_of_all_movies(filtered_movie_ratings_frequency_list))
-    # #print(top_rated_movies_list(filtered_movie_ratings_frequency_list))
-    # print("{} big list of averaged movies".format(len(all_movie_averages)))
-    # top_unviewed_movies = (find_top_unviewed_movies(all_movie_averages, '33'))
-    # print("{} unviewed movies".format(len(top_unviewed_movies)))
-    # print(top_unviewed_movies)
-    # print('done')
+    # print(type(movie_details_dict))
+    # print(movie_ratings_frequency()['100'])
+    # movie_ratings_frequency_dict = movie_ratings_frequency()
+    # print(len(movie_ratings_frequency_dict))
+    # print((type(movie_ratings_frequency_dict)))
+    # print("first 10 movies in movie_ratings_frequency_dict")
+    # print(movie_ratings_frequency_dict['100'])
+    # print('----------')
+    # print("{} has been rated {} times its average rating is {}".format(find_movie_title('100'),movie_ratings_frequency_dict['100'],find_average_rating_for_movie('100')))
+    # filtered_movie_ratings_frequency_dict = filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 400)
+    # print(len(filter_for_minimum_number_of_ratings(400)))
+    # print(filtered_movie_ratings_frequency_dict)
+    # # #print(top_rated_movies_list(filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 30))[0:10])
+    # # # for all movies in the whole movie list:
+    # # #     find_all_ratings_for_movie(movie_id)
+    # #
+    # all_movie_averages = (averages_of_all_movies(filtered_movie_ratings_frequency_dict))
+    # print(all_movie_averages['100'])
+    # #print(top_rated_movies_dict(filtered_movie_ratings_frequency_dict))
+    # # print("{} big list of averaged movies".format(len(all_movie_averages)))
+    # # top_unviewed_movies = (find_top_unviewed_movies(all_movie_averages, '33'))
+    # # print("{} unviewed movies".format(len(top_unviewed_movies)))
+    # # print(top_unviewed_movies)
+    # # print('done')
