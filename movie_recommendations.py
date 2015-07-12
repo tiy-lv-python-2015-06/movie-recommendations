@@ -5,7 +5,7 @@ import re
 
 class Movie:
     def __init__(self, title=None, genres=None,
-                 ratings=None, movieid=None, link=None, date=None):
+                 movieid=None, link=None, date=None):
         self.title = title
         self.genres = genres
         self.ratings = {}
@@ -21,7 +21,10 @@ class Movie:
         return self.avg_rating
 
     """I don't know what @property means, but pycharm told me to do it
-     and pycharm is smarter than me....what does this mean???"""
+     and pycharm is smarter than me....what does this mean???
+
+     I also don't know what pycharm is yelling at me about: expected size
+     got iterable instead?"""
 
 
 def menu():
@@ -33,7 +36,6 @@ def menu():
         if choice == '1' or choice == '2' or choice == 'e':
             print('\n')
             return choice
-            break
         else:
             print('\nPlease make a valid choice (1,2 or E)')
             continue
@@ -48,34 +50,36 @@ def get_data():
     global user_list
     with open('u.item') as data:
         reader = csv.reader(data, delimiter='|')
-        movies = {}
+        import_movies = {}
         for row in reader:
             key = row[0]
-            movies[key] = Movie(title=row[1], link=row[4],
-                                genres=row[5:], movieid=key, date=row[2])
+            import_movies[key] = Movie(title=row[1], link=row[4],
+                                       genres=row[5:], movieid=key, date=row[2])
 
     with open('u.data') as data:
         reader = csv.reader(data, delimiter='\t')
         for row in reader:
             key = row[1]
-            movies[key].ratings[row[0]] = row[2]
+            import_movies[key].ratings[row[0]] = row[2]
             if row[0] not in user_list:
                 user_list.extend([row[0]])
-    return movies
+    return import_movies
 
 
 def calc_all_avg_ratings():
-    """Tells all the movies to Calculate their aveage rating"""
+    """Tells all the movies to Calculate their average rating"""
     """I put this in again so it didn't run
     before all data was enter for the movies. Probably a better way"""
+    # noinspection PyStatementEffect
     {key: movies[key].calc_avg_rating for key in movies.keys()}
 
 
 def highest_rated(max_items):
     """Returns the next 5 movies with the highest average rating"""
     high_rated = ({key: movies[key].avg_rating for key in movies.keys()})
-    return sorted(high_rated.items(), key=lambda x: (x[1], (x[0])),
-                  reverse=True)[max_items - 5:max_items]
+    high_rated = sorted(high_rated.items(), key=lambda x: (x[1], (x[0])),
+                        reverse=True)[max_items - 5:max_items]
+    return high_rated
 
 
 def euclidean_distance(v, w):
@@ -105,9 +109,9 @@ def common_movies(user1, user2):
     return user1_common_ratings, user2_common_ratings
 
 
-def user_like_users(user_id, user_list):
+def user_like_users(user_id, other_users):
     like_user = {}
-    for user in user_list:
+    for user in other_users:
         if user != user_id:
             movies_in_common = (common_movies(user_id, user))
             like_user[user] = round(
@@ -124,11 +128,11 @@ def movies_not_seen(user_id, like_users, idx=0):
         for user in like_users:
             if user_id not in movies[movie].ratings.keys() \
                     and user[0] in movies[movie].ratings.keys():
-                recommend_dict[(movies[movie].movieid)] = \
+                recommend_dict[movies[movie].movieid] = \
                     (float(movies[movie].ratings[user[0]]) * float(user[1]))
-    for x in sorted(
+    for movie in sorted(
             recommend_dict.items(), key=lambda x: (x[1], x[0]), reverse=True):
-        not_seen.append([x[0]])
+        not_seen.append((movie[0], movie[1],))
     return not_seen[idx - 5:idx]
     # I think this is the hack way to make a generator. Make it a real one?
 
@@ -140,7 +144,7 @@ def show_top_rated():
         x += 5
         top_movies = highest_rated(x)
         for y in top_movies:
-            print(('{} \nAverage Rating:{}\n{}\n').format(
+            print('{} \nAverage Rating:{}\n{}\n'.format(
                 id_to_title(y), movies[y[0]].avg_rating, movies[y[0]].link))
         if next_results():
             continue
@@ -157,11 +161,13 @@ def show_top_recommended():
     while answer == 'n' or answer == 'next':
         x += 5
         top_movies = (
-            movies_not_seen('2', user_like_users(user_num, user_list), idx=x))
-        for y in top_movies:
-            print('{} \nAverage Rating:{}\n{}\n'
-                  .format(id_to_title(y),
-                          movies[y[0]].avg_rating, movies[y[0]].link))
+            movies_not_seen(user_num, user_like_users(user_num, user_list),
+                            idx=x))
+        for movie in top_movies:
+            print('\n{} \nAverage Rating: {}\nGuess for you: {}\n{}'
+                  .format(id_to_title(movie),
+                          movies[movie[0]].avg_rating, movie[1],
+                          movies[movie[0]].link))
         if next_results():
             continue
         else:
@@ -170,30 +176,17 @@ def show_top_recommended():
 
 def next_results():
     answer = input(('\nWould you like to see the [N]ext 5 results,'
-                    '  or [R]eturn to the Menu?\n')).lower()
-    while answer != 'r':
+                    '  or [E]xit to the Menu?\n')).lower()
+    while answer != 'e':
         if answer == 'n' or answer == 'next':
             return True
         else:
-            answer = input('Please enter a valid choice("N" or "R"\n').lower()
+            answer = input('Please enter a valid choice("N" or "E")\n').lower()
     return False
 
 
-def id_to_title(list_of_ids):
-    if len(list_of_ids) == 2:
-        return movies[list_of_ids[0]].title
-    else:
-        titles = []
-        for x in list_of_ids:
-            titles.append(movies[x[0]].title)
-        return titles
-
-
-def show_for_user():
-    user_num = input('Please Enter your ID\n')
-    while user_num not in user_list:
-        user_num = input('Please Enter a valid ID\n')
-    print('working')
+def id_to_title(id_to_change):
+    return movies[id_to_change[0]].title
 
 
 if __name__ == '__main__':
@@ -210,4 +203,4 @@ if __name__ == '__main__':
             show_top_recommended()
         else:
             break
-    print('*****Enjoy your movie***')
+    print('*****Enjoy your movie*****')
