@@ -1,5 +1,7 @@
 import csv
 import itertools
+import math
+import numpy
 
 
 def load_movie_details():
@@ -118,9 +120,9 @@ def find_top_unviewed_movies(user_id):
         sorted_movie_dict[movie_id] = find_average_rating_for_movie(movie_id)
     return sorted_movie_dict
 
-def sort_two_user_lists(first_user, second_user):
-    """Given 2 user_id's, find common movies, return a dictionary of two lists with those movies and ratings
-     Return: { user_id1:[('88',2) ('143',3), ('200',1)], user_id2:[('88',1), ('143',2), ('200',5)]
+def find_common_movies(first_user, second_user):
+    """Given 2 user_id's, find common movies, return a common list of movies. JUST ONE LIST OF MOVIE IDS
+    RETURN: common_list is [('268', '5'), ('288', '4')]
     """
     first_user_dict = find_all_ratings_for_user(first_user)
     # common_dict = first_user_dict
@@ -130,77 +132,103 @@ def sort_two_user_lists(first_user, second_user):
     #return first_user_dict
     first_user_set = set(first_user_list)
     second_user_set = set(second_user_list)
-    common_list = []
-    for key in first_user_set.intersection(second_user_set):
-        movie_rating_pair = (key, second_user_list[key])
-        common_list.append(movie_rating_pair)
+    common_list = [ key for key in first_user_set.intersection(second_user_set) ]
     print("user list 1{}".format(first_user_list))
     print("user list 1{} length".format(len(first_user_list)))
     print("user list 2{}".format(second_user_list))
     print("user list 2{} length".format(len(second_user_list)))
+    common_list.sort()
     print("common_list length is {} ".format(len(common_list)))
-    
+    print("common_list is {}".format(common_list))
+
+
     return common_list
-    # two_user_dict = { first_user:first_user_common_list, second_user:second_user_common_list}
-    # return two_user_dict
+    #common_list is [('268', '5'), ('288', '4')]
 
-    #turn user dicts into lists
+def create_movie_ratings_list(common_movie_list, user_id):
+    """Given a list of just movie_ids, create a list of (movie_id, rating) for that user"""
+    user_common_movie_ratings_list = [
+        get_user_rating_for_a_movie(movie_id, user_id)
+        for movie_id in common_movie_list
+        ]
+    return user_common_movie_ratings_list
 
-    #take common movies to create a list starting with smallest int(movie_id) to biggest
+
+def get_user_rating_for_a_movie(movie_id, user_id):
+    """Given a list of just movie_ids, return (movie_id,user_rating)"""
+    # user_id | item_id | rating | timestamp
+    # go thru the list of ratings for user_id
+    all_ratings_for_user_dict = find_all_ratings_for_user(user_id)
+
+    user_rating_for_a_movie = int(all_ratings_for_user_dict[user_id][movie_id])
+    return user_rating_for_a_movie
+    # make list of [(movie_id, user_rating), (movie_id, user_rating)
 
 # to take two users and find their similarity.
 # If you have a list of movie ratings for user 1 (v) and a list for user 2 (w),
 # where each list is made up of ratings for movies they've both seen in the same order,
 # then you can use this formula:
 
-def euclidean_distance(v, w):
-    """Given two lists, give the Euclidean distance between them on a scale
+def euclidean_distance(first_user_list, second_user_list):
+    """Given two lists of user ratings of the same movies, return the Euclidean distance between them on a scale
     of 0 to 1. 1 means the two lists are identical.
     """
     # Guard against empty lists.
-    if len(v) is 0:
+    if len(first_user_list) is 0:
         return 0
     # Note that this is the same as vector subtraction.
-    differences = [v[idx] - w[idx] for idx in range(len(v))]
+    differences = [first_user_list[idx] - second_user_list[idx] for idx in range(len(first_user_list))]
     squares = [diff ** 2 for diff in differences]
     sum_of_squares = sum(squares)
     return 1 / (1 + math.sqrt(sum_of_squares))
 
+
+def pearson_correlation(first_user_list, second_user_list):
+    return numpy.corrcoef(first_user_list, second_user_list)[0, 1]
+
+# Now that you can calculate the similarity between two users, add a new ability.
+# Given a list of all users, find the users most similar to a specific user,
+# and then recommend the highest rated movies from those users that the specific user hasn't seen.
+# A good formula for figuring out movies that user might like the most is similarity * rating
+
+def most_similar_user(user_id):
+    """Given a user_id, does euclidian or pearson correlation to each user in the db, and returns the most """
+    for each in :
+
+    pass
+
 if __name__ == '__main__':
 
-   # print(averages_of_all_movies())
+    # print(averages_of_all_movies())
 
- #   print(load_rating_data())
-    print(filter_for_minimum_number_of_ratings(400))
+    #   print(load_rating_data())
+    # print(filter_for_minimum_number_of_ratings(400))
+    #
+    # print("find_top_unviewed_movies('28')")
+    # print(find_top_unviewed_movies('28'))
+    #
+    # print("this is  find_movie_title('100')")
+    # print(find_movie_title('100'))
+    # print('---------------------')
+    #
+    # print("find_common_movies between two users")
+    # print(find_common_movies('11', '33'))
+    # print(find_common_movies('11','12'))
+    # print(find_common_movies('100','150'))
+    # print("create_movie_ratings_list(common_movie_list, user_id)")
 
-    print("find_top_unviewed_movies('28')")
-    print(find_top_unviewed_movies('28'))
+    first_user_rated_common_list = (create_movie_ratings_list(find_common_movies('100','150'), '100'))
+    second_user_rated_common_list = (create_movie_ratings_list(find_common_movies('100','150'), '150'))
+    print(first_user_rated_common_list)
+    print(second_user_rated_common_list)
 
-    print("this is  find_movie_title('100')")
-    print(find_movie_title('100'))
-    print('---------------------')
-
-    print("sorting user lists")
-    print(sort_two_user_lists('11', '33'))
-    print(sort_two_user_lists('11','12'))
-    print(sort_two_user_lists('100','150'))
-
+    print("euclidean_distance between user 100 & 150")
+    print(euclidean_distance(first_user_rated_common_list, second_user_rated_common_list))
 
     print("find_average_rating_for_movie('1080')")
     print(find_average_rating_for_movie('1080'))
 
-    print("user_ratings_list is:")
-    print("find_all_ratings_for_user('33')")
-    print(find_all_ratings_for_user('33'))
-    #
-    # print(type(movie_details_dict))
-    # print(movie_ratings_frequency()['100'])
-    # movie_ratings_frequency_dict = movie_ratings_frequency()
-    # print(len(movie_ratings_frequency_dict))
-    # print((type(movie_ratings_frequency_dict)))
-    # print("first 10 movies in movie_ratings_frequency_dict")
-    # print(movie_ratings_frequency_dict['100'])
-    # print('----------')
+
     # print("{} has been rated {} times its average rating is {}".format(find_movie_title('100'),movie_ratings_frequency_dict['100'],find_average_rating_for_movie('100')))
     # filtered_movie_ratings_frequency_dict = filter_for_minimum_number_of_ratings(movie_ratings_frequency(), 400)
     # print(len(filter_for_minimum_number_of_ratings(400)))
