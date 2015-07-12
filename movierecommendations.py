@@ -193,7 +193,7 @@ def pearson_correlation(first_user_list, second_user_list):
 
 def most_similar_user(user_id):
     """Given a user_id, does euclidian or pearson correlation to each user in the db, and returns the most """
-    #for each in :
+    for each in :
 
     pass
 
