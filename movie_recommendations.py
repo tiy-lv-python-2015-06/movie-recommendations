@@ -27,26 +27,8 @@ class Movie:
      got iterable instead?"""
 
 
-def menu():
-    """The menu that allows users to what movies they want to see"""
-    while True:
-        choice = input('\nTo see the Top Rated movies, press 1\n'
-                       'To see movies recommended for you, press 2\n'
-                       'Or press [E] to Exit\n').lower()
-        if choice == '1' or choice == '2' or choice == 'e':
-            print('\n')
-            return choice
-        else:
-            print('\nPlease make a valid choice (1,2 or E)')
-            continue
-
-
 def get_data():
     """imports the movie data"""
-    """I used a global variable here because I didn't want
-    to have to run through the data twice, and the user list is
-    Used a lot. I also don't need it, because
-    the numbers seem to be sequential, but in case they aren't..."""
     global user_list
     with open('u.item') as data:
         reader = csv.reader(data, delimiter='|')
@@ -74,12 +56,52 @@ def calc_all_avg_ratings():
     {key: movies[key].calc_avg_rating for key in movies.keys()}
 
 
+def menu():
+    """The menu that allows users to what movies they want to see"""
+    while True:
+        choice = input('\nTo see the Top Rated movies, press 1\n'
+                       'To see movies recommended for you, press 2\n'
+                       'Or press [E] to Exit\n').lower()
+        if choice == '1' or choice == '2' or choice == 'e':
+            print('\n')
+            return choice
+        else:
+            print('\nPlease make a valid choice (1,2 or [E]xit)')
+            continue
+
+
 def highest_rated(max_items):
     """Returns the next 5 movies with the highest average rating"""
     high_rated = ({key: movies[key].avg_rating for key in movies.keys()})
     high_rated = sorted(high_rated.items(), key=lambda x: (x[1], (x[0])),
                         reverse=True)[max_items - 5:max_items]
     return high_rated
+
+
+def user_like_users(user_id, other_users):
+    """Finds the top x (currently 15) users by euclidean_distance for a
+    given user"""
+    like_user = {}
+    for user in other_users:
+        if user != user_id:
+            movies_in_common = (common_movies(user_id, user))
+            like_user[user] = round(
+                euclidean_distance(
+                    movies_in_common[0], movies_in_common[1]), 4)
+    return sorted(
+        like_user.items(), key=lambda x: (x[1], x[0]), reverse=True)[:15]
+
+
+def common_movies(user1, user2):
+    """Finds movies two users have both rated"""
+    user1_common_ratings = []
+    user2_common_ratings = []
+    for movie in movies:
+        if user1 in movies[movie].ratings.keys() \
+                and user2 in movies[movie].ratings.keys():
+            user1_common_ratings.append(float(movies[movie].ratings[user1]))
+            user2_common_ratings.append(float(movies[movie].ratings[user2]))
+    return user1_common_ratings, user2_common_ratings
 
 
 def euclidean_distance(v, w):
@@ -98,30 +120,9 @@ def euclidean_distance(v, w):
     return 1 / (1 + math.sqrt(sum_of_squares))
 
 
-def common_movies(user1, user2):
-    user1_common_ratings = []
-    user2_common_ratings = []
-    for movie in movies:
-        if user1 in movies[movie].ratings.keys() \
-                and user2 in movies[movie].ratings.keys():
-            user1_common_ratings.append(float(movies[movie].ratings[user1]))
-            user2_common_ratings.append(float(movies[movie].ratings[user2]))
-    return user1_common_ratings, user2_common_ratings
-
-
-def user_like_users(user_id, other_users):
-    like_user = {}
-    for user in other_users:
-        if user != user_id:
-            movies_in_common = (common_movies(user_id, user))
-            like_user[user] = round(
-                euclidean_distance(
-                    movies_in_common[0], movies_in_common[1]), 4)
-    return sorted(
-        like_user.items(), key=lambda x: (x[1], x[0]), reverse=True)[:15]
-
-
 def movies_not_seen(user_id, like_users, idx=0):
+    """Returns the top movies that a specified user has not seen
+    from a list of other users"""
     recommend_dict = {}
     not_seen = []
     for movie in movies:
@@ -138,6 +139,7 @@ def movies_not_seen(user_id, like_users, idx=0):
 
 
 def show_top_rated():
+    """Displays the movies from the list of top rated movies"""
     x = 0
     answer = 'n'
     while answer == 'n' or answer == 'next':
@@ -153,6 +155,8 @@ def show_top_rated():
 
 
 def show_top_recommended():
+    """Displays the movies with highest
+     recommended score based on other users"""
     x = 0
     user_num = input('Please Enter your ID\n')
     while user_num not in user_list:
@@ -175,17 +179,20 @@ def show_top_recommended():
 
 
 def next_results():
+    """Menu prompt for displaying the next set of results"""
     answer = input(('\nWould you like to see the [N]ext 5 results,'
                     '  or [E]xit to the Menu?\n')).lower()
     while answer != 'e':
         if answer == 'n' or answer == 'next':
             return True
         else:
-            answer = input('Please enter a valid choice("N" or "E")\n').lower()
+            answer = input(
+                'Please enter a valid choice("[N]ext or [E]xit)\n').lower()
     return False
 
 
 def id_to_title(id_to_change):
+    """converts a movies ID to the title of the movie"""
     return movies[id_to_change[0]].title
 
 
