@@ -181,6 +181,7 @@ def euclidean_distance(first_user_list, second_user_list):
     squares = [diff ** 2 for diff in differences]
     sum_of_squares = sum(squares)
     return 1 / (1 + math.sqrt(sum_of_squares))
+    #Return => .2 bad, closer to 1 better
 
 
 def pearson_correlation(first_user_list, second_user_list):
@@ -191,9 +192,21 @@ def pearson_correlation(first_user_list, second_user_list):
 # and then recommend the highest rated movies from those users that the specific user hasn't seen.
 # A good formula for figuring out movies that user might like the most is similarity * rating
 
+
 def most_similar_user(user_id):
     """Given a user_id, does euclidian or pearson correlation to each user in the db, and returns the most """
-    for each in :
+    #create dict of users and their movie_ids and their ratings {}
+    all_user_ratings_dict = {}
+    for i in range(9):
+        all_user_ratings_dict[str(i+1)] = find_all_ratings_for_user(str(i+1))
+        print(i)
+    print("-----------")
+    print(all_user_ratings_dict)
+    print("+++++++++++")
+    print(all_user_ratings_dict[user_id])
+    print("<<<<<<<<<<<<")
+
+    #{'4': {'4': {'360': '5', '300': '5', '303': '5', '271': '4'}
 
     pass
 
@@ -225,8 +238,14 @@ if __name__ == '__main__':
     print("euclidean_distance between user 100 & 150")
     print(euclidean_distance(first_user_rated_common_list, second_user_rated_common_list))
 
+    print("pearson_correlation(first_user_rated_common_list, second_user_rated_common_list)")
+    print(pearson_correlation(first_user_rated_common_list, second_user_rated_common_list))
+
     print("find_average_rating_for_movie('1080')")
     print(find_average_rating_for_movie('1080'))
+
+    print(most_similar_user('1'))
+    print(most_similar_user('8'))
 
 
     # print("{} has been rated {} times its average rating is {}".format(find_movie_title('100'),movie_ratings_frequency_dict['100'],find_average_rating_for_movie('100')))
