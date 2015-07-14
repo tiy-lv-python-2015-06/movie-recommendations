@@ -127,6 +127,29 @@ class MovieGen:
 
 if __name__ == '__main__':
 
+    def find_one_user_match(match_id):
+        ratings = user_dict1[match_id].movie_id_list_from_tuple()
+        the_euc_dist = (0,)
+        for key, item in user_dict1.items():
+                if match_id != key:
+                    ratings2 = item.movie_id_list_from_tuple()
+                    common_movie_id_list = find_common_rating_list(ratings,
+                                                                   ratings2)
+
+                    user1_common_ratings = \
+                        trim_list(common_movie_id_list,
+                                  user_dict1[match_id].user_movie_rating)
+                    user2_common_ratings = \
+                        trim_list(common_movie_id_list,
+                                  item.user_movie_rating)
+
+                    new_euc_dist = euclidean_distance(user1_common_ratings,
+                                                      user2_common_ratings)
+                    if new_euc_dist > the_euc_dist[0]:
+                        the_euc_dist = (new_euc_dist, item.user_id)
+
+        return the_euc_dist
+
     def find_common_rating_list(lista, listb):
         return set(lista) & set(listb)
 
@@ -219,43 +242,26 @@ if __name__ == '__main__':
             # given our user loop through all the other
             # users and find the highest
             # euclidean distance then show their top ratings * euclid distance
-            ratings1 = user_dict1[user_id1].movie_id_list_from_tuple()
-            the_euc_dist = (0,)
-            for key, item in user_dict1.items():
-                ratings2 = item.movie_id_list_from_tuple()
-                common_movie_id_list = find_common_rating_list(ratings1,
-                                                               ratings2)
-
-                user1_common_ratings = \
-                    trim_list(common_movie_id_list,
-                              user_dict1[user_id1].user_movie_rating)
-                user2_common_ratings = \
-                    trim_list(common_movie_id_list,
-                              item.user_movie_rating)
-
-                new_euc_dist = euclidean_distance(user1_common_ratings,
-                                                  user2_common_ratings)
-                if new_euc_dist > the_euc_dist[0]:
-                    the_euc_dist = (new_euc_dist, item.user_id)
-
+            matched_user_tuple = find_one_user_match(user_id1)
             print('\nthe user with the top euclidean distance to you is:{} '
                   ' and the distance is:{}'
-                  .format(the_euc_dist[1], the_euc_dist[0]))
+                  .format(matched_user_tuple[1], matched_user_tuple[0]))
 
-            user2_mov_gen = MovieGen(the_euc_dist[1])
+            user2_mov_gen = MovieGen(matched_user_tuple[1])
             user_dict2 = user2_mov_gen.find_user_list(user_data_list)
             the_movie_dict2 = \
-                user1_mov_gen.find_movie_dict(movie_dict_list, user_data_list,
-                                              user_dict2[the_euc_dist[1]])
+                user1_mov_gen.\
+                    find_movie_dict(movie_dict_list, user_data_list,
+                                    user_dict2[matched_user_tuple[1]])
 
             the_movie_dict2 = \
                 user1_mov_gen.take_out_already_reviewed(the_movie_dict1,
                                                         user_dict1[user_id1])
 
-            highest_ratings = user_dict2[the_euc_dist[1]].\
+            highest_ratings = user_dict2[matched_user_tuple[1]].\
                 find_highest_rated(num_movies)
 
             print('Your top {} movies are:\n'.format(num_movies))
             for each in highest_ratings:
                 print('{}  with your predicted rating of {}'.
-                      format(each.name, each.ave_rating*the_euc_dist[0]))
+                      format(each.name, each.ave_rating*matched_user_tuple[0]))
